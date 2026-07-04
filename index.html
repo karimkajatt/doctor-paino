@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. Paino — Demo experiencia inmersiva</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#0b3d62; --teal:#2a9d9b; --claro:#1d6fa5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',sans-serif;color:#fff;background:#05121e;overflow-x:hidden}
+
+  /* ===== ESCENAS DE FONDO (crossfade con scroll) ===== */
+  .stage{position:fixed;inset:0;z-index:0}
+  .scene{position:absolute;inset:0;opacity:0;transition:opacity 1.1s ease, transform 1.6s ease;transform:scale(1.08)}
+  .scene.active{opacity:1;transform:scale(1)}
+  .scene .img{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.62)}
+  /* Capa de degradado como respaldo + atmósfera (parallax mid) */
+  .scene .veil{position:absolute;inset:0}
+  .s-fachada .veil{background:linear-gradient(180deg,rgba(5,18,30,.2),rgba(5,18,30,.85))}
+  .s-recepcion .veil{background:linear-gradient(120deg,rgba(11,61,98,.5),rgba(5,18,30,.75))}
+  .s-pasillo .veil{background:linear-gradient(90deg,rgba(5,18,30,.8),rgba(29,111,165,.25),rgba(5,18,30,.8))}
+  .s-consultorio .veil{background:radial-gradient(circle at 60% 45%,rgba(42,157,155,.18),rgba(5,18,30,.9))}
+  /* imágenes de referencia (reemplazar por fotos reales del consultorio) */
+  .s-fachada .img{background-image:url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=1600&auto=format&fit=crop')}
+  .s-recepcion .img{background-image:url('https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=1600&auto=format&fit=crop')}
+  .s-pasillo .img{background-image:url('https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=1600&auto=format&fit=crop')}
+  .s-consultorio .img{background-image:url('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?q=80&w=1600&auto=format&fit=crop')}
+
+  /* Linterna / foco que sigue el cursor */
+  .spotlight{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(circle 260px at var(--mx,50%) var(--my,50%),rgba(255,255,255,.10),transparent 70%);
+    mix-blend-mode:screen;transition:background .1s}
+
+  /* ===== CONTENIDO POR SECCIONES ===== */
+  .panels{position:relative;z-index:2}
+  .panel{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 8vw;max-width:760px}
+  .eyebrow{letter-spacing:.28em;text-transform:uppercase;font-size:.72rem;color:var(--teal);font-weight:600;margin-bottom:18px;
+    opacity:0;transform:translateY(20px);transition:.8s}
+  .panel h1,.panel h2{font-family:'Lora',serif;font-weight:600;line-height:1.15;margin-bottom:20px;
+    opacity:0;transform:translateY(28px);transition:.8s .1s}
+  .panel h1{font-size:clamp(2.2rem,6vw,4rem)}
+  .panel h2{font-size:clamp(1.7rem,4vw,2.8rem)}
+  .panel p{font-size:1.1rem;font-weight:300;color:#dfeaf2;max-width:520px;
+    opacity:0;transform:translateY(28px);transition:.8s .2s}
+  .panel.reveal .eyebrow,.panel.reveal h1,.panel.reveal h2,.panel.reveal p{opacity:1;transform:none}
+  .scroll-hint{position:absolute;bottom:36px;left:8vw;font-size:.8rem;color:#9fb6c8;letter-spacing:.1em;
+    display:flex;align-items:center;gap:10px}
+  .scroll-hint::after{content:"";width:1px;height:34px;background:linear-gradient(#9fb6c8,transparent);animation:drop 1.8s infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  /* Hotspots interactivos */
+  .hotspots{position:relative;height:0}
+  .hot{position:absolute;width:26px;height:26px;border-radius:50%;background:rgba(42,157,155,.9);cursor:pointer;
+    box-shadow:0 0 0 0 rgba(42,157,155,.6);animation:pulse 2.2s infinite}
+  .hot::before{content:"+";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+  .hot .label{position:absolute;left:36px;top:50%;transform:translateY(-50%);white-space:nowrap;background:rgba(5,18,30,.9);
+    border:1px solid rgba(42,157,155,.5);padding:8px 14px;border-radius:10px;font-size:.82rem;opacity:0;pointer-events:none;transition:.3s}
+  .hot:hover .label{opacity:1}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(42,157,155,.5)}70%{box-shadow:0 0 0 16px rgba(42,157,155,0)}100%{box-shadow:0 0 0 0 rgba(42,157,155,0)}}
+
+  /* Indicador de ambientes (minimapa) */
+  .nav-dots{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:5;display:flex;flex-direction:column;gap:16px}
+  .nav-dots button{width:11px;height:11px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:transparent;cursor:pointer;transition:.3s;position:relative}
+  .nav-dots button.on{background:var(--teal);border-color:var(--teal);transform:scale(1.3)}
+  .nav-dots button span{position:absolute;right:22px;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:.72rem;color:#cfe0ec;opacity:0;transition:.3s}
+  .nav-dots button:hover span{opacity:1}
+
+  /* Recepción del Dr. virtual (IA) */
+  .doctor-card{display:flex;gap:20px;align-items:center;margin-top:26px;padding:18px 20px;border-radius:16px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);max-width:480px;
+    opacity:0;transform:translateY(28px);transition:.8s .35s}
+  .panel.reveal .doctor-card{opacity:1;transform:none}
+  .doctor-card .ava{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--claro),var(--teal));flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-family:'Lora';font-size:1.4rem}
+  .doctor-card b{font-family:'Lora';font-size:1.05rem}
+  .doctor-card p{font-size:.9rem;color:#cfe0ec;margin-top:2px;opacity:1;transform:none}
+  .chat-btn{margin-top:16px;align-self:flex-start;background:var(--teal);color:#fff;border:none;padding:13px 26px;border-radius:40px;
+    font-weight:600;cursor:pointer;font-size:.92rem;transition:.25s;opacity:0;transform:translateY(20px)}
+  .panel.reveal .chat-btn{opacity:1;transform:none;transition:.8s .45s}
+  .chat-btn:hover{background:#23807e}
+
+  /* Ventana de chat simulada */
+  .chat{position:fixed;right:26px;bottom:26px;width:340px;max-width:88vw;z-index:20;border-radius:18px;overflow:hidden;
+    background:#0b1f30;border:1px solid rgba(42,157,155,.4);box-shadow:0 20px 60px rgba(0,0,0,.5);
+    transform:translateY(140%);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .chat.open{transform:none}
+  .chat header{background:linear-gradient(135deg,var(--azul),var(--claro));padding:16px 18px;display:flex;gap:12px;align-items:center}
+  .chat header .ava{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Lora'}
+  .chat header b{font-size:.95rem}.chat header small{color:#cfe0ec;font-size:.72rem}
+  .chat header .x{margin-left:auto;cursor:pointer;color:#cfe0ec;font-size:1.3rem;line-height:1}
+  .chat .body{padding:18px;display:flex;flex-direction:column;gap:12px;max-height:300px;overflow:auto}
+  .msg{padding:11px 14px;border-radius:14px;font-size:.88rem;line-height:1.5;max-width:85%}
+  .msg.bot{background:rgba(255,255,255,.08);border-bottom-left-radius:4px;align-self:flex-start}
+  .msg.me{background:var(--teal);align-self:flex-end;border-bottom-right-radius:4px}
+  .chat .foot{padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:.72rem;color:#8fa9bd;text-align:center}
+
+  .note{position:fixed;left:14px;bottom:12px;z-index:30;font-size:.68rem;color:#5f7d92;background:rgba(5,18,30,.7);padding:6px 10px;border-radius:8px}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="scene s-fachada active" data-scene="0"><div class="img"></div><div class="veil"></div></div>
+  <div class="scene s-recepcion" data-scene="1"><div class="img"></div><div class="veil"></div></div>
+  <div class="scene s-pasillo" data-scene="2"><div class="img"></div><div class="veil"></div></div>
+  <div class="scene s-consultorio" data-scene="3"><div class="img"></div><div class="veil"></div></div>
+</div>
+<div class="spotlight"></div>
+
+<nav class="nav-dots">
+  <button class="on" data-go="0"><span>Bienvenida</span></button>
+  <button data-go="1"><span>Recepción</span></button>
+  <button data-go="2"><span>Pasillo</span></button>
+  <button data-go="3"><span>Consultorio</span></button>
+</nav>
+
+<main class="panels">
+  <section class="panel" data-scene="0">
+    <div class="eyebrow">Instituto de Neurocirugía · Dr. Javier Paino</div>
+    <h1>Bienvenido. Pase, lo estábamos esperando.</h1>
+    <p>No es una página web cualquiera: es la puerta de entrada a mi consultorio. Baje para recorrerlo conmigo.</p>
+    <div class="scroll-hint">Desplácese para entrar</div>
+  </section>
+
+  <section class="panel" data-scene="1">
+    <div class="eyebrow">Recepción</div>
+    <h2>Una atención privada, no masificada</h2>
+    <p>Aquí lo recibe nuestro equipo. Cada paciente es atendido de forma personal, con el tiempo que merece.</p>
+    <div class="hotspots">
+      <div class="hot" style="left:62vw;top:-40px"><span class="label">Agende su cita sin esperas</span></div>
+    </div>
+  </section>
+
+  <section class="panel" data-scene="2">
+    <div class="eyebrow">Nuestras instalaciones</div>
+    <h2>Tecnología de precisión a cada paso</h2>
+    <p>Camine por el instituto: equipos modernos, navegación por imágenes y salas preparadas para casos simples y complejos.</p>
+    <div class="hotspots">
+      <div class="hot" style="left:20vw;top:-60px"><span class="label">Sala de terapia física</span></div>
+      <div class="hot" style="left:70vw;top:40px"><span class="label">Monitoreo intraoperatorio</span></div>
+    </div>
+  </section>
+
+  <section class="panel" data-scene="3">
+    <div class="eyebrow">Consultorio del Dr. Paino</div>
+    <h2>Ha llegado. Conversemos.</h2>
+    <p>Como si estuviera sentado frente a mí. Pregúnteme sus dudas más comunes y le responderé con mi criterio.</p>
+    <div class="doctor-card">
+      <div class="ava">JP</div>
+      <div><b>Dr. Javier Paino</b><p>Asistente virtual · disponible ahora</p></div>
+    </div>
+    <button class="chat-btn" onclick="document.querySelector('.chat').classList.add('open')">Iniciar la consulta virtual →</button>
+  </section>
+</main>
+
+<div class="chat">
+  <header>
+    <div class="ava">JP</div>
+    <div><b>Dr. Paino</b><br><small>Asistente virtual con IA</small></div>
+    <span class="x" onclick="this.closest('.chat').classList.remove('open')">×</span>
+  </header>
+  <div class="body">
+    <div class="msg bot">Hola, soy el asistente virtual del Dr. Paino. ¿En qué puedo ayudarle? Puede preguntarme sobre columna, cerebro, dolor o tumores.</div>
+    <div class="msg me">Tengo una hernia de disco, ¿necesito operarme?</div>
+    <div class="msg bot">La mayoría de las hernias mejora sin cirugía, con manejo del dolor y rehabilitación. Solo un grupo pequeño necesita operarse. Para saber su caso, lo ideal es evaluarlo con sus imágenes. ¿Desea agendar una cita?</div>
+  </div>
+  <div class="foot">Asistente virtual · información general, no reemplaza una consulta médica</div>
+</div>
+
+<div class="note">Demo · imágenes de referencia (se reemplazan por fotos reales del consultorio)</div>
+
+<script>
+  const scenes=[...document.querySelectorAll('.scene')];
+  const panels=[...document.querySelectorAll('.panel')];
+  const dots=[...document.querySelectorAll('.nav-dots button')];
+  function setScene(i){
+    scenes.forEach(s=>s.classList.toggle('active',+s.dataset.scene===i));
+    dots.forEach(d=>d.classList.toggle('on',+d.dataset.go===i));
+  }
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){e.target.classList.add('reveal');setScene(+e.target.dataset.scene);}
+    });
+  },{threshold:.55});
+  panels.forEach(p=>io.observe(p));
+  dots.forEach(d=>d.addEventListener('click',()=>panels[+d.dataset.go].scrollIntoView({behavior:'smooth'})));
+  // Linterna que sigue el cursor
+  addEventListener('mousemove',e=>{
+    document.querySelector('.spotlight').style.setProperty('--mx',e.clientX+'px');
+    document.querySelector('.spotlight').style.setProperty('--my',e.clientY+'px');
+  });
+</script>
+</body>
+</html>
