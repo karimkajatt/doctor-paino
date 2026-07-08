@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import { CONTACT } from "@/lib/data/contact";
 import { FAQS } from "@/lib/data/faqs";
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPEN_ROUTER_KEY;
     if (!apiKey) {
       return NextResponse.json(
         {
@@ -95,23 +94,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ai = new GoogleGenAI({ apiKey });
-
-    const contents = messages.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
-
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents,
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        maxOutputTokens: 400,
+    const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        max_tokens: 400,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+        ],
+      }),
     });
 
-    const reply = response.text?.trim();
+    if (!openRouterRes.ok) {
+      console.error("Error de OpenRouter:", openRouterRes.status, await openRouterRes.text());
+      return NextResponse.json({
+        reply: `Lo siento, hubo un problema técnico. Intente de nuevo o comuníquese al ${CONTACT.phones.direct}.`,
+      });
+    }
+
+    const data = await openRouterRes.json();
+    const reply = data.choices?.[0]?.message?.content?.trim();
 
     return NextResponse.json({
       reply:

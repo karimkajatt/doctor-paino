@@ -27,7 +27,7 @@ Copia `.env.local.example` como `.env.local` y completa:
 
 | Variable | Para qué sirve | Obligatoria |
 |---|---|---|
-| `GEMINI_API_KEY` | Clave de Google Gemini para el asistente de IA (`app/api/chat/route.ts`). Gratis en [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Sin esta clave, el chat responde con un mensaje pidiendo llamar al consultorio. | Sí, para que el chat funcione |
+| `OPEN_ROUTER_KEY` | Clave de OpenRouter para el asistente de IA (`app/api/chat/route.ts`). Se obtiene en [openrouter.ai/keys](https://openrouter.ai/keys). Sin esta clave, el chat responde con un mensaje pidiendo llamar al consultorio. | Sí, para que el chat funcione |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Número de WhatsApp del consultorio en formato internacional sin "+" (ej. `51987654321`). **Pendiente de confirmación del cliente** — hoy tiene un placeholder. | Sí, antes de publicar |
 | `NEXT_PUBLIC_SITE_URL` | Dominio final del sitio (para SEO, sitemap, Open Graph). | Sí, antes de publicar |
 | `NEXT_PUBLIC_GA_ID` | ID de Google Analytics 4 (`G-XXXXXXX`). Si no se define, GA4 simplemente no se carga (Vercel Analytics igual funciona sin esta variable). | No |
