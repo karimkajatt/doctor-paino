@@ -108,6 +108,9 @@ export default function ChatWidget() {
       }
 
       const data = await res.json();
+      if (data.debug) {
+        console.error("[chat/api]", data.debug);
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -117,7 +120,8 @@ export default function ChatWidget() {
             `Lo siento, hubo un problema. Intente de nuevo o llámenos al ${CONTACT.phones.direct}.`,
         },
       ]);
-    } catch {
+    } catch (err) {
+      console.error("[chat/fetch]", err);
       setMessages((prev) => [
         ...prev,
         {

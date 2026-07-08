@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = process.env.OPEN_ROUTER_KEY;
+    const apiKey = process.env.OPEN_ROUTER_KEY?.trim();
     if (!apiKey) {
       return NextResponse.json(
         {
@@ -111,9 +111,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (!openRouterRes.ok) {
-      console.error("Error de OpenRouter:", openRouterRes.status, await openRouterRes.text());
+      const errorBody = await openRouterRes.text();
+      console.error("Error de OpenRouter:", openRouterRes.status, errorBody);
       return NextResponse.json({
         reply: `Lo siento, hubo un problema técnico. Intente de nuevo o comuníquese al ${CONTACT.phones.direct}.`,
+        debug: `OpenRouter ${openRouterRes.status}: ${errorBody}`,
       });
     }
 
@@ -130,6 +132,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         reply: `Lo siento, hubo un problema técnico. Intente de nuevo o comuníquese al ${CONTACT.phones.direct}.`,
+        debug: err instanceof Error ? err.message : String(err),
       },
       { status: 200 }
     );
