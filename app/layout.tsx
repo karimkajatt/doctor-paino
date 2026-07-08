@@ -17,9 +17,9 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Dr. Paino — Demo experiencia inmersiva",
+  title: "Dr. Javier Paino — Neurocirugía de Columna y Cerebro",
   description:
-    "Instituto de Neurocirugía Dr. Javier Paino — recorrido inmersivo del consultorio y asistente virtual.",
+    "Dr. Javier Paino Scarpati, neurocirujano titular en Clínica San Felipe, Lima. Cirugía mínimamente invasiva de columna, tumores cerebrales, manejo del dolor y neurorrehabilitación.",
 };
 
 export default function RootLayout({
