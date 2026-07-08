@@ -112,10 +112,11 @@ export async function POST(req: NextRequest) {
 
     if (!openRouterRes.ok) {
       const errorBody = await openRouterRes.text();
-      console.error("Error de OpenRouter:", openRouterRes.status, errorBody);
+      const keyPreview = `len=${apiKey.length} starts="${apiKey.slice(0, 6)}" ends="${apiKey.slice(-4)}"`;
+      console.error("Error de OpenRouter:", openRouterRes.status, errorBody, keyPreview);
       return NextResponse.json({
         reply: `Lo siento, hubo un problema técnico. Intente de nuevo o comuníquese al ${CONTACT.phones.direct}.`,
-        debug: `OpenRouter ${openRouterRes.status}: ${errorBody}`,
+        debug: `OpenRouter ${openRouterRes.status}: ${errorBody} | key ${keyPreview}`,
       });
     }
 
