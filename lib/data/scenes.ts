@@ -8,7 +8,7 @@
 // tipo de hotspot:
 //   "info"   -> tarjeta informativa (no navega)
 //   "nav"    -> salta a otra escena del recorrido
-//   "accion" -> dispara una acción (agendar cita / abrir el chat)
+//   "accion" -> dispara una acción (agendar cita / ir a la sección de teleconsulta)
 
 export type HotspotTipo = "info" | "nav" | "accion";
 
@@ -20,7 +20,7 @@ export type Hotspot = {
   titulo: string;
   detalle?: string;
   targetScene?: number; // para tipo "nav"
-  accion?: "agendar" | "chat"; // para tipo "accion"
+  accion?: "agendar" | "teleconsulta"; // para tipo "accion"
 };
 
 export type Scene = {
@@ -126,8 +126,8 @@ export const SCENES: Scene[] = [
         x: 68,
         y: 62,
         tipo: "accion",
-        titulo: "Hablar con el asistente",
-        accion: "chat",
+        titulo: "Iniciar teleconsulta",
+        accion: "teleconsulta",
       },
     ],
   },

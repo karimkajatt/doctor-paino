@@ -7,7 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SCENES } from "@/lib/data/scenes";
 import Hotspot from "./Hotspot";
 import MiniMap from "./MiniMap";
-import { OPEN_CHAT_EVENT } from "@/components/chat/ChatWidget";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -21,6 +20,7 @@ export default function SceneTour({ panels }: { panels: TourPanel[] }) {
   const [activeScene, setActiveScene] = useState(0);
   const [revealed, setRevealed] = useState<boolean[]>(() => SCENES.map(() => false));
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(true);
 
   const panelRefs = useRef<(HTMLElement | null)[]>([]);
   const mediaWrapRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -48,6 +48,24 @@ export default function SceneTour({ panels }: { panels: TourPanel[] }) {
     );
     panelRefs.current.forEach((panel) => panel && io.observe(panel));
     return () => io.disconnect();
+  }, []);
+
+  // El minimapa (fixed) solo tiene sentido mientras el recorrido está en
+  // pantalla. Se oculta una vez que se llega a las secciones estáticas de
+  // abajo (testimonios, precios, etc.), para no superponerse con su texto.
+  useEffect(() => {
+    const checkVisibility = () => {
+      const lastPanel = panelRefs.current[panelRefs.current.length - 1];
+      if (!lastPanel) return;
+      setShowMinimap(lastPanel.getBoundingClientRect().bottom > 80);
+    };
+    checkVisibility();
+    window.addEventListener("scroll", checkVisibility, { passive: true });
+    window.addEventListener("resize", checkVisibility);
+    return () => {
+      window.removeEventListener("scroll", checkVisibility);
+      window.removeEventListener("resize", checkVisibility);
+    };
   }, []);
 
   // Autorotación suave del fondo mientras el usuario no ha interactuado todavía.
@@ -153,12 +171,9 @@ export default function SceneTour({ panels }: { panels: TourPanel[] }) {
     panelRefs.current[i]?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleAction = (accion: "agendar" | "chat") => {
-    if (accion === "chat") {
-      window.dispatchEvent(new Event(OPEN_CHAT_EVENT));
-    } else {
-      document.querySelector("#contacto")?.scrollIntoView({ behavior: "smooth" });
-    }
+  const handleAction = (accion: "agendar" | "teleconsulta") => {
+    const targetId = accion === "teleconsulta" ? "#teleconsulta" : "#contacto";
+    document.querySelector(targetId)?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -201,7 +216,7 @@ export default function SceneTour({ panels }: { panels: TourPanel[] }) {
 
       <div className="tour-spotlight" ref={spotlightRef} />
 
-      <MiniMap active={activeScene} onSelect={goToScene} />
+      <MiniMap active={activeScene} onSelect={goToScene} visible={showMinimap} />
 
       <main id="main-content" className="tour-panels">
         {panels.map((panel, i) => (

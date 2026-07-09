@@ -1,12 +1,12 @@
 import Image from "next/image";
 import SceneTour, { type TourPanel } from "@/components/tour/SceneTour";
 import StatCounter from "@/components/tour/StatCounter";
-import OpenChatButton from "@/components/chat/OpenChatButton";
 import Institutions from "@/components/sections/Institutions";
 import Testimonials from "@/components/sections/Testimonials";
 import Pricing from "@/components/sections/Pricing";
 import Faq from "@/components/sections/Faq";
 import Contact from "@/components/sections/Contact";
+import TeleconsultaCTA from "@/components/sections/TeleconsultaCTA";
 import { CONTACT } from "@/lib/data/contact";
 import { SERVICIOS } from "@/lib/data/services";
 
@@ -117,7 +117,9 @@ const PANELS: TourPanel[] = [
             <p>Asistente virtual · disponible ahora</p>
           </div>
         </div>
-        <OpenChatButton>Iniciar la consulta virtual →</OpenChatButton>
+        <a href="#teleconsulta" className="btn btn-primary">
+          Conocer la consulta virtual ↓
+        </a>
       </>
     ),
   },
@@ -132,6 +134,7 @@ export default function Home() {
       <Pricing />
       <Faq />
       <Contact />
+      <TeleconsultaCTA />
     </>
   );
 }

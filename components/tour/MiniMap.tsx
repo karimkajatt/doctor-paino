@@ -5,12 +5,18 @@ import { SCENES } from "@/lib/data/scenes";
 export default function MiniMap({
   active,
   onSelect,
+  visible = true,
 }: {
   active: number;
   onSelect: (i: number) => void;
+  visible?: boolean;
 }) {
   return (
-    <nav className="tour-minimap" aria-label="Ambientes del recorrido">
+    <nav
+      className={`tour-minimap${visible ? "" : " hidden"}`}
+      aria-label="Ambientes del recorrido"
+      aria-hidden={!visible}
+    >
       {SCENES.map((scene, i) => (
         <button
           key={scene.key}

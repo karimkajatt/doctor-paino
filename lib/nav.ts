@@ -5,4 +5,5 @@ export const NAV_ITEMS = [
   { href: "#modalidades", label: "Consultas" },
   { href: "#faq", label: "Preguntas" },
   { href: "#contacto", label: "Contacto" },
+  { href: "#teleconsulta", label: "Consulta virtual" },
 ] as const;

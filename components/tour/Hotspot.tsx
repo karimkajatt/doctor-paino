@@ -10,7 +10,7 @@ export default function Hotspot({
 }: {
   data: HotspotData;
   onNavigate: (sceneIndex: number) => void;
-  onAction: (accion: "agendar" | "chat") => void;
+  onAction: (accion: "agendar" | "teleconsulta") => void;
 }) {
   const [open, setOpen] = useState(false);
 

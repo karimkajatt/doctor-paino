@@ -803,6 +803,9 @@ h3 {
   flex-direction: column;
   gap: 16px;
 }
+.tour-minimap.hidden {
+  display: none;
+}
 .tour-minimap__item {
   display: flex;
   align-items: center;
@@ -1035,6 +1038,58 @@ h3 {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+/* Consulta virtual — CTA de cierre antes del footer */
+.teleconsulta-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.teleconsulta-photo {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-card);
+}
+.teleconsulta-photo img {
+  object-fit: cover;
+  object-position: center 20%;
+}
+.teleconsulta-photo__status {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(5, 18, 30, 0.75);
+  backdrop-filter: blur(6px);
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  color: #9be6c2;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.teleconsulta-copy p {
+  color: var(--texto-suave);
+  margin: 16px 0 28px;
+  max-width: 520px;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+@media (max-width: 860px) {
+  .teleconsulta-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .teleconsulta-photo {
+    max-width: 320px;
+    margin: 0 auto;
+  }
 }
 
 /* =========================================================================
