@@ -84,7 +84,10 @@ export default function ChatWidget() {
   }, [messages]);
 
   useEffect(() => {
-    chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: "smooth" });
+    const raf = requestAnimationFrame(() => {
+      chatBodyRef.current?.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(raf);
   }, [messages, sending]);
 
   const sendMessage = async (overrideText?: string) => {
@@ -215,7 +218,7 @@ export default function ChatWidget() {
             </div>
           </div>
 
-          <div className="consult-transcript" ref={chatBodyRef}>
+          <div className="consult-transcript" ref={chatBodyRef} data-lenis-prevent>
             {messages.map((m, i) => (
               <div className={`consult-msg ${m.role === "user" ? "me" : "bot"}${m.error ? " error" : ""}`} key={i}>
                 {m.content}
