@@ -1,3 +1,4 @@
+import Image from "next/image";
 import SceneTour, { type TourPanel } from "@/components/tour/SceneTour";
 import StatCounter from "@/components/tour/StatCounter";
 import OpenChatButton from "@/components/chat/OpenChatButton";
@@ -45,6 +46,14 @@ const PANELS: TourPanel[] = [
     id: "sobre-el-doctor",
     content: (
       <>
+        <div className="doctor-portrait">
+          <Image
+            src="/images/dr-paino.png"
+            alt="Dr. Javier Paino Scarpati en su consultorio"
+            fill
+            sizes="108px"
+          />
+        </div>
         <div className="eyebrow">Sobre el Dr. Paino</div>
         <h2>Formación de nivel internacional, atención cercana</h2>
         <p>

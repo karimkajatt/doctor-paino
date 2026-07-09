@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { CONTACT } from "@/lib/data/contact";
 
 // Evento global para abrir el chat desde cualquier componente (hotspots del
@@ -28,12 +29,21 @@ const SUGGESTED_CHIPS = [
   "¿Dónde y cómo agendo mi cita?",
 ];
 
+function formatElapsed(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
 export default function ChatWidget() {
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [lastUserText, setLastUserText] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
   const hydrated = useRef(false);
 
@@ -42,6 +52,15 @@ export default function ChatWidget() {
     window.addEventListener(OPEN_CHAT_EVENT, open);
     return () => window.removeEventListener(OPEN_CHAT_EVENT, open);
   }, []);
+
+  // Cronómetro de la "consulta", como en una videollamada real. Arranca de
+  // cero cada vez que se abre y se detiene al cerrar.
+  useEffect(() => {
+    if (!chatOpen) return;
+    setElapsedSeconds(0);
+    const interval = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [chatOpen]);
 
   // Restaura el historial de la sesión (se pierde al cerrar la pestaña, a
   // propósito — no es un dato que deba persistir entre visitas distintas).
@@ -150,88 +169,140 @@ export default function ChatWidget() {
       <button
         className="chat-fab"
         onClick={() => setChatOpen((v) => !v)}
-        aria-label={chatOpen ? "Cerrar asistente virtual" : "Abrir asistente virtual"}
+        aria-label={chatOpen ? "Cerrar consulta virtual" : "Iniciar consulta virtual"}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H8l-4 4V6a1 1 0 0 1 1-1Z" />
         </svg>
       </button>
 
-      <div className={`chat${chatOpen ? " open" : ""}`} role="dialog" aria-label="Asistente virtual del Dr. Paino" aria-hidden={!chatOpen}>
-        <header>
-          <div className="ava" aria-hidden="true">
-            JP
+      <div
+        className={`consult-overlay${chatOpen ? " open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Consulta virtual con el Dr. Paino"
+        aria-hidden={!chatOpen}
+      >
+        <div className="consult-card">
+          <div className="consult-topbar">
+            <span className="consult-timer">{formatElapsed(elapsedSeconds)}</span>
+            <button className="consult-close" onClick={() => setChatOpen(false)} aria-label="Cerrar consulta virtual">
+              ×
+            </button>
           </div>
-          <div>
-            <b>Dr. Paino</b>
-            <br />
-            <small>Asistente virtual con IA</small>
-          </div>
-          <button className="x" onClick={() => setChatOpen(false)} aria-label="Cerrar chat">
-            ×
-          </button>
-        </header>
 
-        <div className="body" ref={chatBodyRef}>
-          {messages.map((m, i) => (
-            <div className={`msg ${m.role === "user" ? "me" : "bot"}${m.error ? " error" : ""}`} key={i}>
-              {m.content}
-            </div>
-          ))}
-          {sending && (
-            <div className="msg bot" aria-live="polite">
-              <span className="typing-dots">
-                <span />
-                <span />
-                <span />
+          <div className="consult-video">
+            <Image
+              src="/images/dr-paino.png"
+              alt="Dr. Javier Paino en la consulta virtual"
+              fill
+              sizes="(max-width: 640px) 100vw, 820px"
+              className="consult-video__photo"
+            />
+            <div className="consult-video__scrim" />
+            <div className="consult-video__doctor">
+              <b>Dr. Javier Paino</b>
+              <span className="consult-status-label">
+                <span className="consult-status-dot" aria-hidden="true" />
+                En línea
               </span>
             </div>
-          )}
-          {lastMessage?.error && !sending && (
-            <button className="retry-btn" onClick={handleRetry}>
-              Reintentar
-            </button>
-          )}
-        </div>
-
-        {showChips && !sending && (
-          <div className="chat-chips">
-            {SUGGESTED_CHIPS.map((chip) => (
-              <button key={chip} className="chat-chip" onClick={() => sendMessage(chip)}>
-                {chip}
-              </button>
-            ))}
+            <div className="consult-pip" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z" />
+              </svg>
+              <span>Tú</span>
+            </div>
           </div>
-        )}
 
-        <a href="#contacto" className="btn btn-ghost btn-sm chat-schedule-btn" onClick={() => setChatOpen(false)}>
-          Agendar cita →
-        </a>
+          <div className="consult-transcript" ref={chatBodyRef}>
+            {messages.map((m, i) => (
+              <div className={`consult-msg ${m.role === "user" ? "me" : "bot"}${m.error ? " error" : ""}`} key={i}>
+                {m.content}
+              </div>
+            ))}
+            {sending && (
+              <div className="consult-msg bot" aria-live="polite">
+                <span className="typing-dots">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </div>
+            )}
+            {lastMessage?.error && !sending && (
+              <button className="retry-btn" onClick={handleRetry}>
+                Reintentar
+              </button>
+            )}
+          </div>
 
-        {/*
-          Punto de integración futura: voz / avatar.
-          Aquí podría montarse un reproductor de audio (ElevenLabs TTS sobre
-          `data.reply`) o un avatar de video en vivo (HeyGen / D-ID) que
-          reciba el mismo texto de respuesta del asistente.
-        */}
+          {showChips && !sending && (
+            <div className="chat-chips">
+              {SUGGESTED_CHIPS.map((chip) => (
+                <button key={chip} className="chat-chip" onClick={() => sendMessage(chip)}>
+                  {chip}
+                </button>
+              ))}
+            </div>
+          )}
 
-        <div className="input-row">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
-            }}
-            placeholder="Escriba su pregunta…"
-            aria-label="Escriba su pregunta para el asistente virtual"
-            disabled={sending}
-          />
-          <button onClick={() => sendMessage()} disabled={sending || !input.trim()}>
-            Enviar
-          </button>
-        </div>
-        <div className="foot">
-          Asistente virtual · información general, no reemplaza una consulta médica
+          {/*
+            Punto de integración futura: voz / avatar.
+            Aquí podría montarse un reproductor de audio (ElevenLabs TTS sobre
+            `data.reply`) o un avatar de video en vivo (HeyGen / D-ID) que
+            reciba el mismo texto de respuesta del asistente, en vez de la
+            foto fija usada hoy en .consult-video.
+          */}
+
+          <div className="consult-input-row">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
+              placeholder="Escriba su pregunta…"
+              aria-label="Escriba su pregunta para el Dr. Paino"
+              disabled={sending}
+            />
+            <button onClick={() => sendMessage()} disabled={sending || !input.trim()}>
+              Enviar
+            </button>
+          </div>
+
+          <div className="consult-controls">
+            <div className="call-control">
+              <button aria-label="Micrófono" onClick={(e) => e.preventDefault()}>
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z" />
+                </svg>
+              </button>
+              <span className="call-control__tooltip">Consulta por texto disponible ahora</span>
+            </div>
+
+            <button className="hangup-btn" onClick={() => setChatOpen(false)} aria-label="Terminar consulta virtual">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 9c-2.5 0-4.9.6-7 1.7a1.5 1.5 0 0 0-.8 1.7l.6 2.4a1.5 1.5 0 0 0 1.7 1.1l2.4-.4a1.5 1.5 0 0 0 1.2-1.3l.2-1.6a9.7 9.7 0 0 1 3.4 0l.2 1.6a1.5 1.5 0 0 0 1.2 1.3l2.4.4a1.5 1.5 0 0 0 1.7-1.1l.6-2.4a1.5 1.5 0 0 0-.8-1.7A16.3 16.3 0 0 0 12 9Z" />
+              </svg>
+            </button>
+
+            <div className="call-control">
+              <button aria-label="Cámara" onClick={(e) => e.preventDefault()}>
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2.5l4 2.5V8l-4 2.5V8a2 2 0 0 0-2-2H4Z" />
+                </svg>
+              </button>
+              <span className="call-control__tooltip">Consulta por texto disponible ahora</span>
+            </div>
+          </div>
+
+          <div className="consult-meta">
+            <small>Asistente virtual · información general, no reemplaza una consulta médica</small>
+            <a href="#contacto" className="btn btn-ghost btn-sm chat-schedule-btn" onClick={() => setChatOpen(false)}>
+              Agendar cita presencial →
+            </a>
+          </div>
         </div>
       </div>
     </>
